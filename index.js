@@ -83,7 +83,7 @@ const scrapeWebsite = async (url, taskId) => {
     result.template = generateTemplate(result.design);
 
     // Save extracted assets to disk
-    await saveAssets(url, result.design, result.template);
+    await saveAssets(url, result.design);
 
     tasks[taskId].result = result;
     await browser.close();
@@ -133,7 +133,7 @@ const removeScriptTags = (html) => {
     throw err;
   }
 };
-const saveAssets = async (url, design, template) => {
+const saveAssets = async (url, design) => {
   try {
     // Sanitize the URL to create a valid folder name
     const folderName = url
@@ -156,9 +156,6 @@ const saveAssets = async (url, design, template) => {
 
     fs.writeFileSync(path.join(assetDir, "index.html"), htmlWithStyles);
     fs.writeFileSync(path.join(assetDir, "styles.css"), design.css);
-
-    fs.writeFileSync(path.join(assetDir, "template.html"), template.html);
-    fs.writeFileSync(path.join(assetDir, "template.css"), template.css);
   } catch (err) {
     console.error("Error saving assets", err);
     throw err;
@@ -166,38 +163,11 @@ const saveAssets = async (url, design, template) => {
 };
 
 const generateTemplate = (design) => {
-  try {
-    const { window } = new JSDOM(design.html);
-    const { document } = window;
-
-    // Remove unnecessary attributes from elements
-    const elements = document.querySelectorAll("*");
-    elements.forEach((element) => {
-      element.removeAttribute("id");
-      element.removeAttribute("class");
-      Array.from(element.attributes).forEach((attr) => {
-        if (attr.name.startsWith("data-")) {
-          element.removeAttribute(attr.name);
-        }
-      });
-    });
-
-    const navElements = document.querySelectorAll("nav");
-    navElements.forEach((nav) => {
-      const templateTag = document.createTextNode("{{navigation}}");
-      nav.parentNode.replaceChild(templateTag, nav);
-    });
-
-    const template = {
-      html: document.documentElement.outerHTML,
-      css: design.css,
-    };
-
-    return template;
-  } catch (err) {
-    console.error("Error generating template", err);
-    throw err;
-  }
+  // Will Implement template generation logic here
+  return {
+    html: design.html,
+    css: design.css,
+  };
 };
 
 // Start the server
