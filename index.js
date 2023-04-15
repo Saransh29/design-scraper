@@ -1,7 +1,6 @@
 // Import required libraries
 const express = require("express");
 const puppeteer = require("puppeteer");
-const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
@@ -15,6 +14,7 @@ app.use(cors());
 
 app.post("/scraper", async (req, res) => {
   const { url } = req.body;
+  console.log("URL: ", url);
   if (!url) {
     return res.status(400).json({ error: "URL is required" });
   }
