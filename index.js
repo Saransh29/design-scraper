@@ -27,11 +27,14 @@ app.post("/scrape", async (req, res) => {
   };
 
   // Launch the scraper in a separate asynchronous function
-  scrapeWebsite(url, taskId).then((result) => {
+  try {
+    await scrapeWebsite(url, taskId);
     tasks[taskId].status = "completed";
     tasks[taskId].progress = 100;
-    tasks[taskId].result = result;
-  });
+  } catch (err) {
+    tasks[taskId].status = "failed";
+    tasks[taskId].error = err.message;
+  }
 
   res.json({ taskId });
 });
@@ -69,14 +72,13 @@ const scrapeWebsite = async (url, taskId) => {
     design: {},
     template: {},
   };
-  console.log(page);
 
   // Extract design and template information
   result.design.html = await page.content();
   result.design.css = await extractCSS(page);
 
   // Save extracted assets to disk
-  await saveAssets(result.design);
+  await saveAssets(url, result.design);
 
   // Generate template
   result.template = generateTemplate(result.design);
@@ -108,13 +110,25 @@ const extractCSS = async (page) => {
 
   return cssTexts.filter((css) => css !== null).join("\n");
 };
+const removeScriptTags = (html) => {
+  return html.replace(
+    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    ""
+  );
+};
+const saveAssets = async (url, design) => {
+  const folderName = url.replace(/(^\w+:|^)\/\//, "").replace(/[^\w\d]+/g, "_");
 
-const saveAssets = async (design) => {
-  const assetDir = path.join(__dirname, "assets");
+  const assetDir = path.join(__dirname, "assets", folderName);
   fs.mkdirSync(assetDir, { recursive: true });
 
+  const htmlWithoutScripts = removeScriptTags(design.html);
+
   const linkTag = '<link rel="stylesheet" type="text/css" href="styles.css" />';
-  const htmlWithStyles = design.html.replace("</head>", `${linkTag}</head>`);
+  const htmlWithStyles = htmlWithoutScripts.replace(
+    "</head>",
+    `${linkTag}</head>`
+  );
 
   fs.writeFileSync(path.join(assetDir, "index.html"), htmlWithStyles);
   fs.writeFileSync(path.join(assetDir, "styles.css"), design.css);
