@@ -113,7 +113,10 @@ const saveAssets = async (design) => {
   const assetDir = path.join(__dirname, "assets");
   fs.mkdirSync(assetDir, { recursive: true });
 
-  fs.writeFileSync(path.join(assetDir, "index.html"), design.html);
+  const linkTag = '<link rel="stylesheet" type="text/css" href="styles.css" />';
+  const htmlWithStyles = design.html.replace("</head>", `${linkTag}</head>`);
+
+  fs.writeFileSync(path.join(assetDir, "index.html"), htmlWithStyles);
   fs.writeFileSync(path.join(assetDir, "styles.css"), design.css);
 };
 
