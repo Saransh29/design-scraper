@@ -12,6 +12,30 @@ app.use(express.json());
 
 app.use(cors());
 
+app.post("/testing", async (req, res) => {
+  const { url } = req.body;
+
+  try {
+    const result = {
+      design: {},
+    };
+    result.design.html = await fs.readFileSync(
+      `./assets_archive/${url}/index.html`,
+      "utf8"
+    );
+    result.design.css = await fs.readFileSync(
+      `./assets_archive/${url}/styles.css`,
+      "utf8"
+    );
+
+    const scraped = result;
+    res.status(200).json({ scraped });
+  } catch (err) {
+    console.error(`Error scraping website: ${url}`, err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.post("/scraper", async (req, res) => {
   const { url } = req.body;
   console.log("URL: ", url);
@@ -40,6 +64,8 @@ const scrape = async (url) => {
     // Extract design and template information
     result.design.html = await page.content();
     result.design.css = await extractCSS(page);
+
+    await saveAssets(url, result.design);
 
     // Save extracted assets to disk
     await browser.close();
